@@ -7,6 +7,9 @@ import http from 'http';
 const app = express();
 const httpServer = http.createServer(app);
 
+// -- global middlewares
+app.use(express.json());
+
 httpServer.listen(parseInt(process.env.SERVER_PORT), () => {
   console.log('server started: http://localhost:3000');
 });
@@ -14,6 +17,10 @@ httpServer.listen(parseInt(process.env.SERVER_PORT), () => {
 // --- private chat apis
 import { PrivateChatApiModule, privateChatApiService } from './private-chat-api';
 new PrivateChatApiModule(app, privateChatApiService).init();
+
+// --- auth apis
+import { AuthModule, authService, verifyEmailService } from './auth';
+new AuthModule(app, authService, verifyEmailService).init();
 
 // -------- socket
 import socket from 'socket.io';

@@ -8,6 +8,11 @@ interface CreateOne {
 
 interface Exists extends CreateOne {}
 
+interface Find {
+  userId: string;
+  chatId: string;
+}
+
 export class PrivateChatRepository {
   constructor(protected chatModel: typeof PrivateChatModel) {}
 
@@ -53,5 +58,12 @@ export class PrivateChatRepository {
 
   async existsByChatId(chatId: string) {
     return this.chatModel.exists({ _id: chatId });
+  }
+
+  async find(input: Find) {
+    return await this.chatModel.findOne({
+      _id: toObjectId(input.chatId),
+      members: toObjectId(input.userId),
+    });
   }
 }

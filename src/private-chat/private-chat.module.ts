@@ -36,7 +36,8 @@ export class PrivateChatModule extends BaseSocketGateway {
   init() {
     this.io.on('connect', async (socket) => {
       await socketAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN, socket);
-      await this._joinToPrivataChats(socket);
+      // await this._joinToPrivataChats(socket);
+      socket.join(socket.data.userId);
     });
 
     this.io.on('connection', (socket) => {
@@ -73,18 +74,11 @@ export class PrivateChatModule extends BaseSocketGateway {
   private async onCreateChat(socket: socket.Socket, input: CreateChatDto) {
     try {
       const result = await this.service.createChat(socket.data.userId, input);
+      const response = { status: 'success', value: result };
 
-      // add two clients to the new chat
-      await Promise.all([
-        this._findSocketInstance(input.userId)?.join(result.id),
-        socket.join(result.id),
-      ]);
-
-      // emit to both clients, the new chat
-      this.io.in(result.id).emit(ActiveEvents.createChat, {
-        status: 'success',
-        value: result,
-      });
+      // emit response to both clients, the new chat
+      socket.emit(ActiveEvents.createChat, response);
+      socket.in(input.userId).emit(ActiveEvents.createChat, response);
     } catch (error) {
       let message: string;
 
@@ -104,7 +98,7 @@ export class PrivateChatModule extends BaseSocketGateway {
   private async onSendMessage(socket: socket.Socket, input: SendMessageDto) {
     try {
       const result = await this.service.sendMessage(socket.data.userId, input);
-      socket.in(input.chatId).emit(ActiveEvents.sendMessage, result);
+      socket.in(result.to).emit(ActiveEvents.sendMessage, result.message);
     } catch (error) {
       let message: string;
 
@@ -125,9 +119,9 @@ export class PrivateChatModule extends BaseSocketGateway {
     try {
       const result = await this.service.deleteMessage(socket.data.userId, input);
 
-      socket.in(input.chatId).emit(ActiveEvents.deleteMessage, {
-        messageId: result._id,
-        chatId: result.chatId,
+      socket.in(result.targetId).emit(ActiveEvents.deleteMessage, {
+        messageId: input.messageId,
+        chatId: input.chatId,
       });
     } catch (error) {
       let message: string;
@@ -148,12 +142,7 @@ export class PrivateChatModule extends BaseSocketGateway {
   private async onUpdateMessage(socket: socket.Socket, input: UpdateMessageDto) {
     try {
       const result = await this.service.updateMessage(socket.data.userId, input);
-
-      socket.in(input.chatId).emit(ActiveEvents.updateMessage, {
-        messageId: result._id,
-        chatId: result.chatId,
-        body: result.body,
-      });
+      socket.in(result.targetId).emit(ActiveEvents.updateMessage, result.message);
     } catch (error) {
       let message: string;
 
@@ -168,21 +157,5 @@ export class PrivateChatModule extends BaseSocketGateway {
         value: message,
       });
     }
-  }
-
-  private _findSocketInstance(userId: string): socket.Socket | undefined {
-    for (let ins of this.io.sockets.values()) {
-      if (ins.data.userId == userId) return ins;
-    }
-  }
-
-  private async _joinToPrivataChats(socket: socket.Socket) {
-    const chats = await this.service.clinetChats(socket.data.userId);
-
-    for (let chat of chats) {
-      socket.join(chat._id.toString());
-    }
-
-    socket.emit(ActiveEvents.joinedChats, chats);
   }
 }

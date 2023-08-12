@@ -1,4 +1,5 @@
 import { GatewayException } from '../common/error';
+
 import {
   PrivateChatMessageRepository,
   PrivateChatRepository,
@@ -44,40 +45,61 @@ export class PrivateChatService {
   }
 
   async sendMessage(clientId: string, input: SendMessageDto) {
-    const isChatExists = await this.privateChatRepo.existsByChatId(input.chatId);
-    if (!isChatExists) {
-      throw new GatewayException("chat didn't find");
-    }
+    const chat = await this.existsInChat(input.chatId, clientId);
 
     // create a new message
-    return await this.privateChatMessageRepo.create({
+    const message = await this.privateChatMessageRepo.create({
       userId: clientId,
       ...input,
     });
+
+    const to = chat.members.filter((v) => v.toString() != clientId)[0].toString();
+    return { message, from: clientId, to };
   }
 
   async deleteMessage(clientId: string, input: DeleteMessageDto) {
+    const chat = await this.existsInChat(input.chatId, clientId);
+
+    // delete message
     const deletedMessage = await this.privateChatMessageRepo.delete({
       userId: clientId,
       ...input,
     });
-
     if (!deletedMessage) {
       throw new GatewayException("message didn't find");
     }
-    return deletedMessage;
+
+    const targetId = chat.members
+      .filter((v) => v.toString() != clientId)[0]
+      .toString();
+    return { targetId };
   }
 
   async updateMessage(clientId: string, input: UpdateMessageDto) {
+    const chat = await this.existsInChat(input.chatId, clientId);
+
+    // update message
     const updatedMessage = await this.privateChatMessageRepo.updateOne({
       userId: clientId,
       ...input,
     });
-
     if (!updatedMessage) {
       throw new GatewayException("message didn't find");
     }
-    return updatedMessage;
+
+    const targetId = chat.members
+      .filter((v) => v.toString() != clientId)[0]
+      .toString();
+    return { targetId, message: updatedMessage };
+  }
+
+  private async existsInChat(chatId: string, userId: string) {
+    // check client exists in the chat
+    const chat = await this.privateChatRepo.find({ chatId, userId });
+    if (!chat) {
+      throw new GatewayException("chat didn't find");
+    }
+    return chat;
   }
 }
 

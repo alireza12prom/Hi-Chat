@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema(
     fname: { type: Types.String },
     lname: { type: Types.String },
     email: { type: Types.String, required: true, unique: true },
+    bio: { type: Types.String },
   },
   { timestamps: true },
 );

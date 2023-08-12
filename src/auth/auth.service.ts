@@ -2,6 +2,7 @@ import { RequestDto, VerifyDto } from './dto';
 import jsonwebtoken from 'jsonwebtoken';
 import { randomNumber } from '../common/utils';
 import { HttpException } from '../common/error';
+import { TokenTypes } from '../common/constant';
 
 import {
   SessionRepository,
@@ -93,7 +94,6 @@ export class AuthService {
 
 // --- injecting repositories to the service
 import { UserModel, VerifyMessageModel, SessionModel } from '../db/models';
-import { TokenTypes } from '../common/constant';
 
 // --- repositories
 const userRepo = new UserRepository(UserModel);

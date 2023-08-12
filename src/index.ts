@@ -14,13 +14,17 @@ httpServer.listen(parseInt(process.env.SERVER_PORT), () => {
   console.log('server started: http://localhost:3000');
 });
 
-// --- private chat apis
+// --- private chat routes
 import { PrivateChatApiModule, privateChatApiService } from './private-chat-api';
 new PrivateChatApiModule(app, privateChatApiService).init();
 
-// --- auth apis
+// --- auth routes
 import { AuthModule, authService, verifyEmailService } from './auth';
 new AuthModule(app, authService, verifyEmailService).init();
+
+// --- profile routes
+import { ProfileModule, profileService } from './profile';
+new ProfileModule(app, profileService).init();
 
 // -------- socket
 import socket from 'socket.io';

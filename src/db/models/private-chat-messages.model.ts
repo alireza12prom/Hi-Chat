@@ -11,6 +11,7 @@ const PrivateChatMessageSchema = new mongoose.Schema(
   { timestamps: { createdAt: true } },
 );
 
+// -- virtual fields
 PrivateChatMessageSchema.virtual('chat', {
   ref: Models.PRIVATE_CHAT,
   foreignField: '_id',
@@ -27,6 +28,9 @@ PrivateChatMessageSchema.virtual('user', {
 
 PrivateChatMessageSchema.set('toJSON', { virtuals: true });
 PrivateChatMessageSchema.set('toObject', { virtuals: true });
+
+// --- indexes
+PrivateChatMessageSchema.index({ createdAt: -1 });
 
 export const PrivateChatMessageModel = mongoose.model(
   Models.PRIVATE_CHAT_MESSAGE,

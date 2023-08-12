@@ -1,4 +1,4 @@
-import mongoose, { InferSchemaType, Model } from 'mongoose';
+import mongoose from 'mongoose';
 import { Models } from '../../common/constant';
 const Types = mongoose.Schema.Types;
 

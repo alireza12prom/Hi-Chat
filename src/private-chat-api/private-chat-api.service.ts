@@ -1,5 +1,5 @@
 import { HttpException } from '../common/error';
-import { GetChatMessagesDto } from './dto';
+import { GetChatMessagesDto, GetChatsDto } from './dto';
 import { PrivateChatMessageRepository, PrivateChatRepository } from './repository';
 
 export class PrivateChatApiService {
@@ -21,6 +21,13 @@ export class PrivateChatApiService {
 
     // return messages
     return await this.privateChatMessageRepo.getAll(input);
+  }
+
+  async getChats(clientId: string, input: GetChatsDto) {
+    return await this.privateChatRepo.getAll({
+      userId: clientId,
+      ...input,
+    });
   }
 }
 

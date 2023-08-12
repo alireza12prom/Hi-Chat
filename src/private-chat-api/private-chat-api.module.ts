@@ -20,7 +20,10 @@ export class PrivateChatApiModule extends BaseHttpGateway {
 
   init() {
     // -- middleware
-    this.app.use(httpAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN));
+    this.app.use(
+      '/api/v1/private-chat/*',
+      httpAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN),
+    );
 
     // --- handler
     this.app.get(

@@ -1,13 +1,14 @@
 import express from 'express';
+import requestIp from 'request-ip';
+import { ipv6ToIpv4 } from '../common/utils';
 import { AuthService } from './auth.service';
+import { TokenTypes } from '../common/constant';
 import { BaseHttpGateway } from '../common/base';
 import { ReqeustSchema, VerifySchema } from './dto';
 import { VerifyEmailService } from './verify-email.service';
-import requestIp from 'request-ip';
-import { ipv6ToIpv4 } from '../common/utils';
 
 import {
-  authorizationMiddleware,
+  httpAuthorizationMiddleware,
   validateHttpInput,
   wrapper,
 } from '../common/middleware';
@@ -33,17 +34,18 @@ export class AuthModule extends BaseHttpGateway {
 
     this.app.post(
       this.baseUrl + '/verify',
-      authorizationMiddleware,
+      httpAuthorizationMiddleware(TokenTypes.VERIFY_SMS_TOKEN, false),
       wrapper(this.verifyHandler.bind(this)),
     );
   }
 
   private async requestHandler(req: express.Request, res: express.Response) {
+    const clientIp = ipv6ToIpv4(req.clientIp || '');
+
     // validate inputs
     const input = validateHttpInput(req.body, ReqeustSchema);
 
     // create account
-    const clientIp = ipv6ToIpv4(req.clientIp || '');
     const result = await this.service.requestToRegister(clientIp, input);
 
     // send email

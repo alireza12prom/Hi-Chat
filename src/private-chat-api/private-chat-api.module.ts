@@ -1,8 +1,14 @@
 import express from 'express';
 import { GetChatMessagesSchema } from './dto';
+import { TokenTypes } from '../common/constant';
 import { BaseHttpGateway } from '../common/base';
-import { validateHttpInput, wrapper } from '../common/middleware';
 import { PrivateChatApiService } from './private-chat-api.service';
+
+import {
+  httpAuthorizationMiddleware,
+  validateHttpInput,
+  wrapper,
+} from '../common/middleware';
 
 export class PrivateChatApiModule extends BaseHttpGateway {
   constructor(
@@ -13,12 +19,10 @@ export class PrivateChatApiModule extends BaseHttpGateway {
   }
 
   init() {
-    // FIXME: the authorization header shoud be verifyed
-    this.app.use((req, res, next) => {
-      req.user = { id: req.headers.authorization as string };
-      next();
-    });
+    // -- middleware
+    this.app.use(httpAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN));
 
+    // --- handler
     this.app.get(
       this.baseUrl + '/messages/:chatId',
       wrapper(this.getChatMessages.bind(this)),

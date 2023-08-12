@@ -18,6 +18,9 @@ SessionSchema.virtual('user', {
   justOne: true,
 });
 
+SessionSchema.set('toJSON', { virtuals: true });
+SessionSchema.set('toObject', { virtuals: true });
+
 SessionSchema.index({ userId: 1, ipAdd: 1 }, { unique: true });
 
 export const SessionModel = mongoose.model(Models.SESSION, SessionSchema);

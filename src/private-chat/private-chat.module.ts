@@ -1,7 +1,7 @@
 import socket from 'socket.io';
+import { TokenTypes } from '../common/constant';
 import { GatewayException } from '../common/error';
 import { BaseSocketGateway } from '../common/base';
-import { validateSocketBody } from '../common/middleware';
 import { PrivateChatService } from './private-chat.service';
 
 import {
@@ -14,6 +14,11 @@ import {
   CreateChatDto,
   CreateChatSchema,
 } from './dto';
+
+import {
+  socketAuthorizationMiddleware,
+  validateSocketBody,
+} from '../common/middleware';
 
 enum ActiveEvents {
   createChat = 'create-chat',
@@ -29,11 +34,8 @@ export class PrivateChatModule extends BaseSocketGateway {
   }
 
   init() {
-    // FIXME: the authorization header shoud be verifyed
     this.io.on('connect', async (socket) => {
-      socket.data = { userId: socket.handshake.headers.authorization };
-
-      // the client shoud join to its chats
+      await socketAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN, socket);
       await this._joinToPrivataChats(socket);
     });
 

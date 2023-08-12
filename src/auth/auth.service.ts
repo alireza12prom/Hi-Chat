@@ -56,7 +56,12 @@ export class AuthService {
     // generaet token
     const secret = process.env.JWT_SECRET;
     const expiresIn = parseInt(process.env.VERIFY_MESSAGE_EXPIRE_SEC);
-    const payload = { messageId: message.id, sessionId: sessionId };
+
+    const payload = {
+      messageId: message.id,
+      sessionId: sessionId,
+      type: TokenTypes.VERIFY_SMS_TOKEN,
+    };
 
     const token = jsonwebtoken.sign(payload, secret, { expiresIn });
 
@@ -80,15 +85,15 @@ export class AuthService {
     // geneate token
     const secert = process.env.JWT_SECRET;
     const expiresIn = parseInt(process.env.ACCESS_TOKEN_EXPIRE_DAY);
+    const payload = { sessionId: sessionId, type: TokenTypes.ACCESS_TOKEN };
 
-    return jsonwebtoken.sign({ sessionId: sessionId }, secert, {
-      expiresIn: `${expiresIn} days`,
-    });
+    return jsonwebtoken.sign(payload, secert, { expiresIn: `${expiresIn} days` });
   }
 }
 
 // --- injecting repositories to the service
 import { UserModel, VerifyMessageModel, SessionModel } from '../db/models';
+import { TokenTypes } from '../common/constant';
 
 // --- repositories
 const userRepo = new UserRepository(UserModel);

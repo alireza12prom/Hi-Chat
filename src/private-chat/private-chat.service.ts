@@ -8,6 +8,7 @@ import {
 
 import {
   CreateChatDto,
+  DeleteChatDto,
   DeleteMessageDto,
   SendMessageDto,
   UpdateMessageDto,
@@ -42,6 +43,21 @@ export class PrivateChatService {
     return await this.privateChatRepo.create({
       members: [clientId, input.userId],
     });
+  }
+
+  async deleteChat(clientId: string, input: DeleteChatDto) {
+    const chat = await this.existsInChat(input.chatId, clientId);
+
+    // delete chat & messages
+    await Promise.all([
+      this.privateChatRepo.deleteOne(input.chatId),
+      this.privateChatMessageRepo.deleteMessages(input.chatId),
+    ]);
+
+    const targetId = chat.members
+      .filter((v) => v.toString() != clientId)[0]
+      .toString();
+    return { targetId };
   }
 
   async sendMessage(clientId: string, input: SendMessageDto) {

@@ -66,4 +66,8 @@ export class PrivateChatRepository {
       members: toObjectId(input.userId),
     });
   }
+
+  async deleteOne(chatId: string) {
+    return await this.chatModel.deleteOne({ _id: toObjectId(chatId) });
+  }
 }

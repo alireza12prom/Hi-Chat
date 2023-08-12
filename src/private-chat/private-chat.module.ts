@@ -1,27 +1,25 @@
 import socket from 'socket.io';
 import { TokenTypes } from '../common/constant';
-import { GatewayException } from '../common/error';
 import { BaseSocketGateway } from '../common/base';
 import { PrivateChatService } from './private-chat.service';
 
 import {
   DeleteMessageSchema,
-  SendMessageDto,
   SendMessageSchema,
-  UpdateMessageDto,
-  DeleteMessageDto,
   UpdateMessageSchema,
-  CreateChatDto,
   CreateChatSchema,
+  DeleteChatSchema,
 } from './dto';
 
 import {
+  gatewayWrapper,
   socketAuthorizationMiddleware,
   validateSocketBody,
 } from '../common/middleware';
 
 enum ActiveEvents {
   createChat = 'create-chat',
+  deleteChat = 'delete-caht',
   sendMessage = 'send-message',
   deleteMessage = 'delete-message',
   updateMessage = 'update-message',
@@ -36,126 +34,73 @@ export class PrivateChatModule extends BaseSocketGateway {
   init() {
     this.io.on('connect', async (socket) => {
       await socketAuthorizationMiddleware(TokenTypes.ACCESS_TOKEN, socket);
-      // await this._joinToPrivataChats(socket);
       socket.join(socket.data.userId);
     });
 
     this.io.on('connection', (socket) => {
       socket.on(
         ActiveEvents.createChat,
-        validateSocketBody(socket, CreateChatSchema, this.onCreateChat.bind(this)),
+        gatewayWrapper(socket, this.onCreateChat.bind(this)),
       );
 
       socket.on(
         ActiveEvents.sendMessage,
-        validateSocketBody(socket, SendMessageSchema, this.onSendMessage.bind(this)),
+        gatewayWrapper(socket, this.onSendMessage.bind(this)),
       );
 
       socket.on(
         ActiveEvents.deleteMessage,
-        validateSocketBody(
-          socket,
-          DeleteMessageSchema,
-          this.onDeleteMessage.bind(this),
-        ),
+        gatewayWrapper(socket, this.onDeleteMessage.bind(this)),
       );
 
       socket.on(
         ActiveEvents.updateMessage,
-        validateSocketBody(
-          socket,
-          UpdateMessageSchema,
-          this.onUpdateMessage.bind(this),
-        ),
+        gatewayWrapper(socket, this.onUpdateMessage.bind(this)),
+      );
+
+      socket.on(
+        ActiveEvents.deleteChat,
+        gatewayWrapper(socket, this.onDeleteChat.bind(this)),
       );
     });
   }
 
-  private async onCreateChat(socket: socket.Socket, input: CreateChatDto) {
-    try {
-      const result = await this.service.createChat(socket.data.userId, input);
-      const response = { status: 'success', value: result };
+  private async onCreateChat(socket: socket.Socket, arg: any) {
+    const input = validateSocketBody(arg, CreateChatSchema);
+    const result = await this.service.createChat(socket.data.userId, input);
 
-      // emit response to both clients, the new chat
-      socket.emit(ActiveEvents.createChat, response);
-      socket.in(input.userId).emit(ActiveEvents.createChat, response);
-    } catch (error) {
-      let message: string;
-
-      if (error instanceof GatewayException) {
-        message = error.message;
-      } else {
-        message = 'something went wrong';
-      }
-
-      socket.emit(ActiveEvents.createChat, {
-        status: 'faild',
-        value: message,
-      });
-    }
+    // emit response to both clients, the new chat
+    const response = { status: 'success', value: result };
+    socket.emit(ActiveEvents.createChat, response);
+    socket.in(input.userId).emit(ActiveEvents.createChat, response);
   }
 
-  private async onSendMessage(socket: socket.Socket, input: SendMessageDto) {
-    try {
-      const result = await this.service.sendMessage(socket.data.userId, input);
-      socket.in(result.to).emit(ActiveEvents.sendMessage, result.message);
-    } catch (error) {
-      let message: string;
-
-      if (error instanceof GatewayException) {
-        message = error.message;
-      } else {
-        message = 'something went wrong';
-      }
-
-      socket.emit(ActiveEvents.createChat, {
-        status: 'faild',
-        value: message,
-      });
-    }
+  private async onDeleteChat(socket: socket.Socket, arg: any) {
+    const input = validateSocketBody(arg, DeleteChatSchema);
+    const result = await this.service.deleteChat(socket.data.userId, input);
+    socket
+      .in(result.targetId)
+      .emit(ActiveEvents.deleteChat, { chatId: input.chatId });
   }
 
-  private async onDeleteMessage(socket: socket.Socket, input: DeleteMessageDto) {
-    try {
-      const result = await this.service.deleteMessage(socket.data.userId, input);
-
-      socket.in(result.targetId).emit(ActiveEvents.deleteMessage, {
-        messageId: input.messageId,
-        chatId: input.chatId,
-      });
-    } catch (error) {
-      let message: string;
-
-      if (error instanceof GatewayException) {
-        message = error.message;
-      } else {
-        message = 'something went wrong';
-      }
-
-      socket.emit(ActiveEvents.createChat, {
-        status: 'faild',
-        value: message,
-      });
-    }
+  private async onSendMessage(socket: socket.Socket, arg: any) {
+    const input = validateSocketBody(arg, SendMessageSchema);
+    const result = await this.service.sendMessage(socket.data.userId, input);
+    socket.in(result.to).emit(ActiveEvents.sendMessage, result.message);
   }
 
-  private async onUpdateMessage(socket: socket.Socket, input: UpdateMessageDto) {
-    try {
-      const result = await this.service.updateMessage(socket.data.userId, input);
-      socket.in(result.targetId).emit(ActiveEvents.updateMessage, result.message);
-    } catch (error) {
-      let message: string;
+  private async onDeleteMessage(socket: socket.Socket, arg: any) {
+    const input = validateSocketBody(arg, DeleteMessageSchema);
+    const result = await this.service.deleteMessage(socket.data.userId, input);
+    socket.in(result.targetId).emit(ActiveEvents.deleteMessage, {
+      messageId: input.messageId,
+      chatId: input.chatId,
+    });
+  }
 
-      if (error instanceof GatewayException) {
-        message = error.message;
-      } else {
-        message = 'something went wrong';
-      }
-
-      socket.emit(ActiveEvents.createChat, {
-        status: 'faild',
-        value: message,
-      });
-    }
+  private async onUpdateMessage(socket: socket.Socket, arg: any) {
+    const input = validateSocketBody(arg, UpdateMessageSchema);
+    const result = await this.service.updateMessage(socket.data.userId, input);
+    socket.in(result.targetId).emit(ActiveEvents.updateMessage, result.message);
   }
 }

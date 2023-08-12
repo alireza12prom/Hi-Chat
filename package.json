@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "prestart:dev": "npm run build",
     "start:dev": "concurrently \"tsc --watch\" \"npx env-cmd -e development -- nodemon dist/index.js\""
   },
   "keywords": [],

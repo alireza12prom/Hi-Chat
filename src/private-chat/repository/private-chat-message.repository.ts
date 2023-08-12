@@ -1,3 +1,4 @@
+import { toObjectId } from '../../common/utils';
 import { PrivateChatMessageModel } from '../../db/models';
 
 interface CreateOne {
@@ -49,5 +50,9 @@ export class PrivateChatMessageRepository {
       { $set: { body: input.body } },
       { returnDocument: 'after' },
     );
+  }
+
+  async deleteMessages(chatId: string) {
+    return await this.chatMessageModel.deleteMany({ chatId: toObjectId(chatId) });
   }
 }

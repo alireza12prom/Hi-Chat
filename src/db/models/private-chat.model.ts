@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Models } from '../../common/constant';
 const Types = mongoose.Schema.Types;
 

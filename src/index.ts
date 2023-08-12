@@ -10,8 +10,9 @@ const httpServer = http.createServer(app);
 // -- global middlewares
 app.use(express.json());
 
-httpServer.listen(parseInt(process.env.SERVER_PORT), () => {
-  console.log('server started: http://localhost:3000');
+const PORT = parseInt(process.env.SERVER_PORT);
+httpServer.listen(PORT, () => {
+  console.log(`server started: http://localhost:${PORT}`);
 });
 
 // --- private chat routes
@@ -28,17 +29,7 @@ new ProfileModule(app, profileService).init();
 
 // -------- socket
 import socket from 'socket.io';
-import * as adminui from '@socket.io/admin-ui';
-
-const io = new socket.Server(httpServer, {
-  cors: {
-    origin: ['https://admin.socket.io'],
-    credentials: true,
-  },
-});
-
-// enable admin ui
-adminui.instrument(io, { auth: false });
+const io = new socket.Server(httpServer, {});
 
 // --- private chat sockets
 import { PrivateChatModule, privateChatService } from './private-chat';

@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <a href="https://expressjs.com/" target="blank"><img src="https://github.com/alireza12prom/Hi-Chat/assets/106696151/a8fed15c-45ec-4bd4-bcb6-2443fd2d2639" width="400" alt="Express Logo" /></a>
 </p>
 
 <h1 align="center"> Express Chat App </h1>
